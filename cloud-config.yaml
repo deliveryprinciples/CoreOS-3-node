@@ -1,0 +1,36 @@
+#cloud-config
+
+coreos:
+  etcd2:
+    # generate a new token for each unique cluster from https://discovery.etcd.io/new?size=3
+    discovery: https://discovery.etcd.io/cb63c70496b03d130886cf4c760efd43
+    # Set transport defaults for public cross cluster communication
+    advertise-client-urls: http://$public_ipv4:2379
+    initial-advertise-peer-urls: http://$private_ipv4:2380
+    # Begin listening
+    listen-client-urls: http://0.0.0.0:2379
+    listen-peer-urls: http://$private_ipv4:2380
+
+  fleet:
+    public-ip: $private_ipv4   # Needed for fleetctl ssh command
+    metadata: role=master_services
+
+  units:
+    - name: etcd2.service
+      command: start
+    - name: fleet.service
+      command: start
+    - name: sshd.socket
+      command: restart
+      runtime: true
+      content: |
+        [Socket]
+        ListenStream=2222
+        FreeBind=true
+        Accept=yes
+
+  locksmith:
+    group: master_services
+
+  update:
+    reboot-strategy: etcd-lock
