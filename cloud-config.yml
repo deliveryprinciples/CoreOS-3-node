@@ -1,0 +1,39 @@
+#cloud-config
+
+coreos:
+  etcd2:
+    # generate a new token for each unique cluster from https://discovery.etcd.io/new?size=3
+    discovery: "https://discovery.etcd.io/c51e848f38dadf9b55112cff844c3ae6"
+    # Set transport defaults for public cross cluster communication
+    advertise-client-urls: "http://$public_ipv4:2379"
+    initial-advertise-peer-urls: "http://$private_ipv4:2380"
+    # Begin listening
+    listen-client-urls: "http://0.0.0.0:2379"
+    listen-peer-urls: "http://$private_ipv4:2380"
+
+  fleet:
+    public-ip: $private_ipv4   # Needed for fleetctl ssh command
+    metadata: "role=master_services"
+
+  units:
+    - name: etcd2.service
+      command: start
+    - name: fleet.service
+      command: start
+    - name: sshd.socket
+      command: restart
+      runtime: true
+      content: |
+        [Socket]
+        ListenStream=2222
+        FreeBind=true
+        Accept=yes
+        
+  locksmith:
+    group: "master_services"
+
+  update:
+    reboot-strategy: "etcd-lock"
+
+ssh_authorized_keys:
+  - "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC8Bmy0Oma7nQJvewLIPotHP0nkv53QIChMT6aSBxZpz9PH+Sj00t/NFp/+qpo5Y5kRLC64LgS1Mx7ZnE9osPPYVNtNw/0zRm3CZWVNYcwHO2B0IMMaf8CKC++aFsf2oFHaVE4+DNQdjiK3sAacB+PdKc4gtx432dvQ0880fjkBIujJGE3AZuInrWazMOFISRIvDzuf4VXcSrosxzm39Ey4HGnvvM9RXUM9Imv5/5HCG0abSRZ10tse2vNktrpdff67/Z+iKWl8Oyzos6zZKdjl+LpulzSo16K6xFzg7W6wJSH+KoGn92Lv3Lb3dRzfrAXuNjheN+s6C2fdyPuqWdsB andrew@MacBook-Pro.local"
