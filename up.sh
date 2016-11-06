@@ -13,5 +13,6 @@ curl --request POST "https://api.digitalocean.com/v2/droplets" \
         "private_networking":true,
         "ssh_keys":["'"$SSH_KEY_ID"'"],
         "names": ["etcd-1", "etcd-2", "etcd-3"],
+        "tags": ["master_services"],
         "user_data":"'"$(cat cloud-config.yaml)"'"
       }'
